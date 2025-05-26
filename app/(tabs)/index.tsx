@@ -1,58 +1,95 @@
-import { Image, ScrollView, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { images } from "@/constants/images";
-import { icons } from "@/constants/icons";
-import SearchBar from "../components/SearchBar";
-import VehicleCard from "../components/VehicleCard";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Vehicle } from "../types";
+import { View, Text, Pressable, StyleSheet, ImageBackground } from 'react-native';
+import React from 'react';
+import { useRouter } from 'expo-router';
+import 'react-native-gesture-handler';
+import 'react-native-reanimated';
 
-export default function Index() {
+
+const Home = () => {
   const router = useRouter();
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
-  useEffect(() => {
-    // Fetch all vehicles from backend
-    axios.get("http://172.20.10.3:8080/api/vehicles/vehicles")
-      .then(res => {
-        if (res.status) {
-          setVehicles(res.data.data);
-        }
-      })
-      .catch(err => {
-        console.error("Error fetching vehicles", err);
-      });
-  }, []);
+  const handleSearch = () => {
+    router.push('/(tabs)/search');
+  };
+
+  const handleOnboard = () => {
+    router.push('/(tabs)/addVehicle');
+  };
 
   return (
-    <View className="flex-1 bg-slate-200">
-      <Image source={images.bg} className="absolute w-full z-0" />
+    <ImageBackground
+      source={require('../../assets/images/homepage-background.jpg')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <Text style={styles.title}>Welcome to ROFI</Text>
+        <Text style={styles.subtitle}>Quickly search or onboard your vehicle with ease</Text>
 
-      <ScrollView
-        className="flex-1 px-5"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ minHeight: "100%", paddingBottom: 10 }}
-      >
-        <Image source={icons.logo} className="w-12 h-10 mt-20 mb-5 mx-auto" />
+        <View style={styles.spacer} />
 
-        <View className="flex-1 mt-5">
-          <SearchBar
-            onPress={() => router.push("/search")}
-            placeholder='Search for a vehicle'
-          />
-        </View>
+        <Pressable style={styles.button} onPress={handleSearch}>
+          <Text style={styles.buttonText}>🔍 Search Vehicles</Text>
+        </Pressable>
 
-        <View className="mt-6">
-          {vehicles.map(vehicle => (
-            <VehicleCard
-              key={vehicle.id}
-              vehicle={vehicle}
-              onPress={() => router.push({ pathname: "/vehicles/[id]", params: { id: vehicle.id.toString() } })}
-              />
-          ))}
-        </View>
-      </ScrollView>
-    </View>
+        <View style={styles.spacerSmall} />
+
+        <Pressable style={[styles.button, styles.secondaryButton]} onPress={handleOnboard}>
+          <Text style={styles.buttonText}>🚗 Onboard Vehicle</Text>
+        </Pressable>
+      </View>
+    </ImageBackground>
   );
-}
+};
+
+export default Home;
+
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    marginBottom: 10,
+    textAlign: 'center',
+    color: '#ffffff',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#d1d5db',
+    textAlign: 'center',
+    marginBottom: 50,
+  },
+  button: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    width: 260,
+    alignItems: 'center',
+    elevation: 3,
+  },
+  secondaryButton: {
+    backgroundColor: '#10b981',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  spacer: {
+    height: 20,
+  },
+  spacerSmall: {
+    height: 15,
+  },
+});

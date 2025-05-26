@@ -73,6 +73,7 @@ const _layout = () => {
                 )
             }}
         />
+
         <Tabs.Screen
             name='addVehicle'
             options={{

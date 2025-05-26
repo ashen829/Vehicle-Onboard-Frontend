@@ -1,4 +1,4 @@
-export type ImageTag = "MAIN" | "FRONT" | "REAR" | "SIDE"; // extend this as needed
+export type ImageTag = "MAIN" | "FRONT" | "REAR" | "SIDE"; 
 
 export interface VehicleImage {
   id: number;
