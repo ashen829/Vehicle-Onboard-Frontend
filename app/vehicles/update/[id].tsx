@@ -1,8 +1,9 @@
-import { View, Text, TextInput, Button, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Button, ScrollView, Alert, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios, { formToJSON } from 'axios';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function VehicleUpdatePage() {
   const { id } = useLocalSearchParams();
@@ -22,11 +23,11 @@ export default function VehicleUpdatePage() {
     useEffect(() => {
     const fetchVehicleDetails = async () => {
         try {
-        const response = await axios.get(`http://172.20.10.3:8080/api/vehicles/vehicles/${id}`);
+        const response = await axios.get(`http://172.236.136.110:8080/api/vehicles/vehicles/${id}`);
         const vehicle = response.data.data;
 
         setRegNo(vehicle.regNo || '');
-        setMakeId(vehicle.make?.id?.toString() || '');
+        setMakeId(vehicle.make?.name || '');
         setModelId(vehicle.model?.name || '');
         setYearOfManu(vehicle.yearOfManu?.toString() || '');
         setFuelType(vehicle.fuelType || '');
@@ -62,8 +63,8 @@ export default function VehicleUpdatePage() {
     const formData = new FormData();
 
     formData.append('regNo', regNo);
-    formData.append('makeId', makeId);
-    formData.append('modelId', modelId);
+    formData.append('makeId', '5');
+    formData.append('modelId', '5');
     formData.append('yearOfManu', yearOfManu);
     formData.append('fuelType', fuelType);
     formData.append('vehicleType', vehicleType);
@@ -78,13 +79,23 @@ export default function VehicleUpdatePage() {
     });
 
     try {
-        console.log(formToJSON(formData))
-      await axios.put(`http://172.20.10.3:8080/api/vehicles/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      Alert.alert('Success', 'Vehicle updated successfully');
+    console.log(formToJSON(formData))
+    const response = await fetch( `http://172.236.136.110:8080/api/vehicles/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      Alert.alert('Success', 'Vehicle Updated!');
+    } else {
+      Alert.alert('Error', `Upload failed: ${response.status}`);
+      console.error('Server response:', data);
+    }
       router.back();
     } catch (err) {
       console.error('Update error:', err);
@@ -105,12 +116,67 @@ export default function VehicleUpdatePage() {
     <ScrollView className="p-5 bg-white" contentContainerStyle={{ paddingBottom: 50 }}>
       <Text className="text-lg font-bold mb-2">Update Vehicle</Text>
 
-      <TextInput placeholder="Reg No" value={regNo} onChangeText={setRegNo} className="border p-2 mb-2" />
-      <TextInput placeholder="Make ID" value={makeId} onChangeText={setMakeId} className="border p-2 mb-2" />
-      <TextInput placeholder="Model ID" value={modelId} onChangeText={setModelId} className="border p-2 mb-2" />
-      <TextInput placeholder="Year of Manufacture" value={yearOfManu} onChangeText={setYearOfManu} keyboardType="numeric" className="border p-2 mb-2" />
-      <TextInput placeholder="Fuel Type" value={fuelType} onChangeText={setFuelType} className="border p-2 mb-2" />
-      <TextInput placeholder="Vehicle Type" value={vehicleType} onChangeText={setVehicleType} className="border p-2 mb-2" />
+      <View className="mb-4">
+        <Text className="mb-1 text-gray-700 font-medium">Registration Number</Text>
+        <TextInput
+          placeholder="Reg No"
+          value={regNo}
+          onChangeText={setRegNo}
+          className="border border-gray-300 p-2 rounded"
+        />
+      </View>
+
+      <View className="mb-4">
+        <Text className="mb-1 text-gray-700 font-medium">Make ID</Text>
+        <TextInput
+          placeholder="Make ID"
+          value={makeId}
+          onChangeText={setMakeId}
+          className="border border-gray-300 p-2 rounded"
+        />
+      </View>
+
+      <View className="mb-4">
+        <Text className="mb-1 text-gray-700 font-medium">Model ID</Text>
+        <TextInput
+          placeholder="Model ID"
+          value={modelId}
+          onChangeText={setModelId}
+          className="border border-gray-300 p-2 rounded"
+        />
+      </View>
+
+      <View className="mb-4">
+        <Text className="mb-1 text-gray-700 font-medium">Year of Manufacture</Text>
+        <TextInput
+          placeholder="Year of Manufacture"
+          value={yearOfManu}
+          onChangeText={setYearOfManu}
+          keyboardType="numeric"
+          className="border border-gray-300 p-2 rounded"
+        />
+      </View>
+
+      <View className="mb-4">
+        <Text className="mb-1 text-gray-700 font-medium">Fuel Type</Text>
+        <TextInput
+          placeholder="Fuel Type"
+          value={fuelType}
+          onChangeText={setFuelType}
+          className="border border-gray-300 p-2 rounded"
+        />
+      </View>
+
+      <View className="mb-4">
+        <Text className="mb-1 text-gray-700 font-medium">Vehicle Type</Text>
+        <TextInput
+          placeholder="Vehicle Type"
+          value={vehicleType}
+          onChangeText={setVehicleType}
+          className="border border-gray-300 p-2 rounded"
+        />
+      </View>
+
 
         <Text className="font-semibold my-2">Add / Replace Images</Text>
         {['MAIN', 'FRONT', 'BACK', 'LEFT', 'RIGHT', 'DASHBOARD', 'BACKSEATS'].map(tag => {
@@ -118,27 +184,36 @@ export default function VehicleUpdatePage() {
         const newPickedImg = taggedImages.find(img => img.tag === tag);
 
         return (
-            <View key={tag} className="mb-4">
-            <Text className="font-semibold">{tag}</Text>
+          <View key={tag} className="mb-6">
+            <Text className="font-semibold mb-2">{tag}</Text>
 
-            {newPickedImg ? (
-                <Image source={{ uri: newPickedImg.uri }} style={{ width: 100, height: 100, borderRadius: 10, marginBottom: 8 }} />
-            ) : existingImg ? (
-                <Image source={{ uri: existingImg.uri }} style={{ width: 100, height: 100, borderRadius: 10, marginBottom: 8 }} />
+            {newPickedImg || existingImg ? (
+              <Image
+                source={{ uri: newPickedImg?.uri || existingImg?.uri }}
+                style={{
+                  width: '100%',
+                  height: 200,
+                  borderRadius: 10,
+                  marginBottom: 8,
+                  resizeMode: 'cover',
+                }}
+              />
             ) : (
-                <Text style={{ marginBottom: 8, color: '#999' }}>No image selected</Text>
+              <Text style={{ marginBottom: 8, color: '#999' }}>No image selected</Text>
             )}
 
             <Button title={`Pick ${tag} Image`} onPress={() => handlePickImage(tag)} />
-            </View>
+          </View>
         );
         })}
 
-
-
-      <View className="mt-6">
-        <Button title="Update Vehicle" onPress={handleUpdate} />
-      </View>
+          <TouchableOpacity
+            onPress={handleUpdate}
+            className="bg-green-600 py-3 mt-2 rounded-xl flex-row items-center justify-center"
+          >
+            <Ionicons name="create-outline" size={20} color="white" />
+            <Text className="text-white font-semibold text-base ml-2">Update Vehicle</Text>
+          </TouchableOpacity>
     </ScrollView>
   );
 }

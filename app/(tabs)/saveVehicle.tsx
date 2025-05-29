@@ -3,6 +3,9 @@ import { View, Text, TextInput, Button, Image, FlatList, StyleSheet, Alert, Scro
 import { launchImageLibrary, Asset  } from 'react-native-image-picker';
 import axios from 'axios';
 import { Picker } from '@react-native-picker/picker'; 
+import { PermissionsAndroid, Platform } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { ImagePickerAsset } from 'expo-image-picker';
 
 interface Make {
   id: number;
@@ -18,7 +21,7 @@ interface Model {
 
 const SaveVehicle = () => {
   const [makeName, setMakeName] = useState('');
-  const [logo, setLogo] = useState<Asset | null>(null);
+  const [logo, setLogo] = useState<ImagePickerAsset | null>(null);
   const [makes, setMakes] = useState<Make[]>([]);
   const [models, setModels] = useState<Model[]>([]);
 
@@ -42,94 +45,101 @@ const SaveVehicle = () => {
     );
   };
 
+  const requestGalleryPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          {
+            title: 'Permission Required',
+            message: 'App needs access to your gallery to upload logo',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
 
-  const fetchMakes = async () => {
-    try {
-      const response = await axios.get('http://172.20.10.3:8080/api/vehicles/makes');
-      if (response.data.status) {
-        setMakes(response.data.data);
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to fetch makes');
     }
+    return true;
   };
 
-  const selectLogo = () => {
-    launchImageLibrary({ mediaType: 'photo' }, (response) => {
-      if (response.assets && response.assets.length > 0) {
-        const selectedAsset: Asset = response.assets[0];
-        setLogo(selectedAsset);
+
+  const fetchMakes = async () => {
+      try {
+        const response = await axios.get('http://172.236.136.110:8080/api/vehicles/makes');
+        if (response.data.status) {
+          setMakes(response.data.data);
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to fetch makes');
       }
+    };
+
+  const selectLogo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 1,
     });
+
+    if (!result.canceled) {
+      setLogo(result.assets[0]);
+    }
   };
 
   const fetchModels = async () => {
-  try {
-    const response = await axios.get('http://172.20.10.3:8080/api/vehicles/models');
-    if (response.data.status) {
-      const formattedModels = response.data.data.map((model: any) => ({
-        id: model.id,
-        name: model.name,
-        vehicleType: model.vehicleType,
-      }));
-      setModels(formattedModels);
+    try {
+      const response = await axios.get('http://172.236.136.110:8080/api/vehicles/models');
+      if (response.data.status) {
+        const formattedModels = response.data.data.map((model: any) => ({
+          id: model.id,
+          name: model.name,
+          vehicleType: model.vehicleType,
+        }));
+        setModels(formattedModels);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch models');
     }
-  } catch (error) {
-    Alert.alert('Error', 'Failed to fetch models');
-  }
-};
-
-const handleSaveModel = async () => {
-  if (!modelName || !selectedMakeId || !vehicleType) {
-    Alert.alert('Validation', 'Please fill all fields to add a model');
-    return;
-  }
-
-  const data = {
-    name: modelName,
-    vehicleType,
-    makeId: selectedMakeId,
   };
 
-  try {
-    const response = await axios.post(
-      'http://172.20.10.3:8080/api/vehicles/models',
-      data,
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    if (response.data.status) {
-      Alert.alert('Success', response.data.message);
-      setModelName('');
-      setSelectedMakeId(null);
-      setVehicleType('CAR');
-      fetchModels(); // refresh list
-    } else {
-      Alert.alert('Error', response.data.message);
-    }
-  } catch (error) {
-    Alert.alert('Error', 'Failed to save model');
-  }
-};
-
-  function base64ToBlob(base64DataUri: any) {
-    const parts = base64DataUri.split(',');
-    if (parts.length !== 2) throw new Error('Invalid base64 data URI');
-
-    const mimeString = parts[0].match(/:(.*?);/)[1];
-    const base64String = parts[1];
-
-    const byteCharacters = atob(base64String);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+const handleSaveModel = async () => {
+    if (!modelName || !selectedMakeId || !vehicleType) {
+      Alert.alert('Validation', 'Please fill all fields to add a model');
+      return;
     }
 
-    const byteArray = new Uint8Array(byteNumbers);
+    const data = {
+      name: modelName,
+      vehicleType,
+      makeId: selectedMakeId,
+    };
 
-    return new Blob([byteArray], { type: mimeString });
-  }
+    try {
+      const response = await axios.post(
+        'http://172.236.136.110:8080/api/vehicles/models',
+        data,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
+      if (response.data.status) {
+        Alert.alert('Success', response.data.message);
+        setModelName('');
+        setSelectedMakeId(null);
+        setVehicleType('CAR');
+        fetchModels();
+      } else {
+        Alert.alert('Error', response.data.message);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save model');
+    }
+  };
 
   const handleSaveMake = async () => {
     if (!makeName || !logo) {
@@ -137,56 +147,65 @@ const handleSaveModel = async () => {
       return;
     }
 
-    console.log(makeName)
-    console.log(logo.uri)
-    console.log(logo.type)
-    console.log(logo.fileName)
-
-
     const formData = new FormData();
 
     formData.append('name', makeName);
 
-    if (logo?.uri) {
-      formData.append('logo', base64ToBlob(logo.uri));
+    if (logo) {
+      formData.append('logo',  {
+        uri: logo.uri,
+        type: 'image/jpeg',
+        name: `logo.jpg`,
+      }as any);
     }
 
-
     try {
-      const response = await axios.post('http://172.20.10.3:8080/api/vehicles/makes', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await axios.post(
+        'http://172.236.136.110:8080/api/vehicles/makes',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
       if (response.data.status) {
         Alert.alert('Success', response.data.message);
         setMakeName('');
         setLogo(null);
-        fetchMakes(); 
+        fetchMakes();
       } else {
         Alert.alert('Error', response.data.message);
       }
     } catch (error) {
+      console.error(error);
       Alert.alert('Error', 'Failed to save make');
     }
   };
+
+
 
   return (
     <FlatList
       ListHeaderComponent={
         <View style={styles.container}>
-          <Text style={styles.heading}>Add Vehicle Make</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter make name"
-            value={makeName}
-            onChangeText={setMakeName}
-          />
-          <Button title="Select Logo" onPress={selectLogo} />
-          {logo && (
-            <Image source={{ uri: logo.uri }} style={styles.logoPreview} />
-          )}
-          <Button title="Save Make" onPress={handleSaveMake} />
+          <View style={styles.card}>
+            <Text style={styles.heading}>Add Vehicle Make</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter make name"
+              value={makeName}
+              onChangeText={setMakeName}
+            />
+            <Button title="Select Logo" onPress={selectLogo} />
+            {logo && (
+              <Image source={{ uri: logo.uri }} style={styles.logoPreview} />
+            )}
+            <Button title="Save Make" onPress={handleSaveMake} />
+          </View>
 
+          <View style={styles.card}>
           <Text style={styles.heading}>Add Vehicle Model</Text>
           <TextInput
             style={styles.input}
@@ -217,12 +236,10 @@ const handleSaveModel = async () => {
           </Picker>
 
           <Button title="Save Model" onPress={handleSaveModel} />
-
-          <Text style={styles.heading}>All Makes</Text>
-        </View>
-
-        
+          </View>
+        </View> 
       }
+
       
       contentContainerStyle={{ paddingBottom: 80, paddingHorizontal: 20 }}
       data={makes}
@@ -230,9 +247,8 @@ const handleSaveModel = async () => {
       renderItem={({ item }) => {
         const isExpanded = expandedMakeIds.includes(item.id);
         const relatedModels = models.filter(model => model.id === item.id); 
-
         return (
-          <View style={styles.makeItem}>
+          <View style={[styles.makeItem, styles.card]}>
             <View style={styles.makeRow}>
               <Image source={{ uri: item.logoPath }} style={styles.makeLogo} />
               <View style={{ flex: 1 }}>
@@ -249,7 +265,7 @@ const handleSaveModel = async () => {
                 {relatedModels.length > 0 ? (
                   relatedModels.map((model, idx) => (
                     <Text key={idx} style={styles.modelName}>
-                       {model.name} ({model.vehicleType})
+                      {model.name} ({model.vehicleType})
                     </Text>
                   ))
                 ) : (
@@ -271,7 +287,14 @@ export default SaveVehicle;
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    marginTop: 20
+    marginTop: 30
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginTop: 20,
+    textAlign: 'center',
   },
   heading: {
     fontSize: 20,
@@ -290,6 +313,17 @@ const styles = StyleSheet.create({
   pathText: {
     fontSize: 10,
     color: 'gray'
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   makeRow: {
     flexDirection: 'row',
@@ -320,6 +354,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10
   },
+
 
 
 

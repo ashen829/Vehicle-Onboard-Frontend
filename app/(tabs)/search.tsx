@@ -13,7 +13,7 @@ export default function Index() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   useEffect(() => {
-    axios.get("http://172.20.10.3:8080/api/vehicles/vehicles")
+    axios.get("http://172.236.136.110:8080/api/vehicles/vehicles")
       .then(res => {
         if (res.status) {
           setVehicles(res.data.data);

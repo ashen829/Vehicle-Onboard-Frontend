@@ -1,7 +1,7 @@
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 
 export default function VehicleCard({ vehicle, onPress }: any) {
-  // Get the main image (tag === "MAIN") or fallback to the first
+
   const mainImage = vehicle.vehicleImages.find((img: any) => img.tag === "MAIN") || vehicle.vehicleImages[0];
 
   return (

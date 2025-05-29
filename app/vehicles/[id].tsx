@@ -41,7 +41,7 @@ export default function VehicleDetailsPage() {
 
   useEffect(() => {
     axios
-      .get(`http://172.20.10.3:8080/api/vehicles/vehicles/${id}`)
+      .get(`http://172.236.136.110:8080/api/vehicles/vehicles/${id}`)
       .then((res) => {
         if (res.data?.status) {
           setVehicle(res.data.data);
@@ -61,7 +61,7 @@ export default function VehicleDetailsPage() {
         style: "destructive",
         onPress: () => {
           axios
-            .delete(`http://172.20.10.3:8080/api/vehicles/${id}`)
+            .delete(`http://172.236.136.110:8080/api/vehicles/${id}`)
             .then(() => {
               Alert.alert("Deleted", "Vehicle has been deleted successfully.");
               router.back();
@@ -100,27 +100,27 @@ export default function VehicleDetailsPage() {
           <Image source={{ uri: vehicle.make.logoPath }} className="w-8 h-8 mr-2" />
           <Text className="text-lg text-gray-800">{vehicle.make.name}</Text>
         </View>
-<View className="space-y-3">
-  <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
-    <Text className="text-xs text-gray-500">Model</Text>
-    <Text className="text-base text-gray-800">{vehicle.model.name}</Text>
-  </View>
+        <View className="space-y-3">
+          <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
+            <Text className="text-xs text-gray-500">Model</Text>
+            <Text className="text-base text-gray-800">{vehicle.model.name}</Text>
+          </View>
 
-  <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
-    <Text className="text-xs text-gray-500">Year of Manufacture</Text>
-    <Text className="text-base text-gray-800">{vehicle.yearOfManu}</Text>
-  </View>
+          <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
+            <Text className="text-xs text-gray-500">Year of Manufacture</Text>
+            <Text className="text-base text-gray-800">{vehicle.yearOfManu}</Text>
+          </View>
 
-  <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
-    <Text className="text-xs text-gray-500">Fuel Type</Text>
-    <Text className="text-base text-gray-800">{vehicle.fuelType}</Text>
-  </View>
+          <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
+            <Text className="text-xs text-gray-500">Fuel Type</Text>
+            <Text className="text-base text-gray-800">{vehicle.fuelType}</Text>
+          </View>
 
-  <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
-    <Text className="text-xs text-gray-500">Vehicle Type</Text>
-    <Text className="text-base text-gray-800">{vehicle.vehicleType}</Text>
-  </View>
-</View>
+          <View className="border border-gray-300 rounded-lg p-3 bg-gray-50">
+            <Text className="text-xs text-gray-500">Vehicle Type</Text>
+            <Text className="text-base text-gray-800">{vehicle.vehicleType}</Text>
+          </View>
+        </View>
 
 
         <Text className="text-lg font-semibold mt-4 mb-2 text-gray-800">Images</Text>
